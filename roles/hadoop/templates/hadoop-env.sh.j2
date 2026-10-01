@@ -1,0 +1,13 @@
+export JAVA_HOME={{ java_home }}
+
+# JVM options for Java 21
+export HADOOP_OPTS="-Djava.net.preferIPv4Stack=true"
+
+# Heap sizes
+export HDFS_NAMENODE_OPTS="-Xmx{{ namenode_heap }}m -XX:+UseG1GC"
+export HDFS_DATANODE_OPTS="-Xmx{{ datanode_heap }}m -XX:+UseG1GC"
+export YARN_RESOURCEMANAGER_OPTS="-Xmx{{ resourcemanager_heap }}m -XX:+UseG1GC"
+export YARN_NODEMANAGER_OPTS="-Xmx{{ nodemanager_heap }}m -XX:+UseG1GC"
+
+# Hadoop 3.4 + Java 25: отключить устаревшие GC-флаги
+#export HADOOP_GC_OPTS=""

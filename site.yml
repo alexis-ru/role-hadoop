@@ -1,0 +1,26 @@
+---
+- name: Deploy Hadoop cluster arena-data
+  hosts: hadoop
+  become: true
+  roles:
+    - hadoop
+
+  post_tasks:
+    - name: Check HDFS report (only on master after formatting)
+      shell: |
+        export JAVA_HOME={{ java_home }}
+        {{ hadoop_dist }}/bin/hdfs dfsadmin -report
+      register: hdfs_report
+      changed_when: false
+      when: inventory_hostname == groups['master'][0]
+      ignore_errors: true
+      environment:
+        HADOOP_CONF_DIR: "{{ hadoop_dist }}/etc/hadoop"
+
+    - name: Show HDFS report
+      debug:
+        var: hdfs_report.stdout_lines
+      when:
+        - inventory_hostname == groups['master'][0]
+        - hdfs_report is defined
+        - hdfs_report.rc == 0

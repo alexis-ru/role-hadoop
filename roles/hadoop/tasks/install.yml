@@ -1,0 +1,91 @@
+---
+- name: Ensure packages for Java and Hadoop
+  apt:
+    name:
+      - openjdk-{{ java_version }}-jdk
+      - curl
+      - wget
+      - unzip
+      - sshpass
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Ensure packages (RHEL/CentOS)
+  yum:
+    name:
+      - java-{{ java_version }}-openjdk-devel
+      - curl
+      - wget
+      - openssh-clients
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Verify Java is installed
+  shell: "java -version 2>&1"
+  register: java_check
+  changed_when: false
+
+- name: Show Java version
+  debug:
+    var: java_check.stderr_lines
+
+- name: Create hadoop group
+  group:
+    name: "{{ hadoop_group }}"
+    state: present
+
+- name: Create hadoop user
+  user:
+    name: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    shell: /bin/bash
+    create_home: yes
+
+- name: Create base directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+  loop:
+    - "{{ hadoop_base }}"
+    - "{{ hadoop_data }}"
+
+- name: Download Hadoop
+  get_url:
+    url: "{{ hadoop_download_url }}"
+    dest: "/tmp/hadoop-{{ hadoop_version }}.tar.gz"
+    mode: "0644"
+
+- name: Extract Hadoop
+  unarchive:
+    src: "/tmp/hadoop-{{ hadoop_version }}.tar.gz"
+    dest: "{{ hadoop_base }}"
+    remote_src: yes
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+
+- name: Set symlink
+  file:
+    src: "{{ hadoop_dist }}"
+    dest: "{{ hadoop_base }}/current"
+    state: link
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+
+- name: Add Hadoop env vars to hadoop user .bashrc
+  blockinfile:
+    path: "/home/{{ hadoop_user }}/.bashrc"
+    create: yes
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    block: |
+      export JAVA_HOME={{ java_home }}
+      export HADOOP_HOME={{ hadoop_dist }}
+      export HADOOP_CONF_DIR={{ hadoop_dist }}/etc/hadoop
+      export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+    marker: "# {mark} HADOOP ENV"
+
+- name: Add vars in .bashrc
+  command: echo 'export HADOOP_HOME="/opt/hadoop/hadoop-3.4.1"' >> ~/.bashrc; echo 'export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"' >> ~/.bashrc; source ~/.bashrc

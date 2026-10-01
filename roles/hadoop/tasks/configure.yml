@@ -1,0 +1,83 @@
+---
+- name: Configure hadoop-env.sh
+  template:
+    src: hadoop-env.sh.j2
+    dest: "{{ hadoop_dist }}/etc/hadoop/hadoop-env.sh"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0755"
+
+- name: Configure core-site.xml
+  template:
+    src: core-site.xml.j2
+    dest: "{{ hadoop_dist }}/etc/hadoop/core-site.xml"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0644"
+
+- name: Configure hdfs-site.xml
+  template:
+    src: hdfs-site.xml.j2
+    dest: "{{ hadoop_dist }}/etc/hadoop/hdfs-site.xml"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0644"
+
+- name: Configure yarn-site.xml
+  template:
+    src: yarn-site.xml.j2
+    dest: "{{ hadoop_dist }}/etc/hadoop/yarn-site.xml"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0644"
+
+- name: Configure mapred-site.xml
+  template:
+    src: mapred-site.xml.j2
+    dest: "{{ hadoop_dist }}/etc/hadoop/mapred-site.xml"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0644"
+
+- name: Configure workers list
+  template:
+    src: workers.j2
+    dest: "{{ hadoop_dist }}/etc/hadoop/workers"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0644"
+
+- name: Update /etc/hosts
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"
+  check_mode: no
+
+- name: Create HDFS data directories on master
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0755"
+  loop:
+    - "{{ hadoop_data }}"
+    - "{{ hadoop_home }}/logs"
+    - "{{ hadoop_data }}/tmp"
+    - "{{ hadoop_data }}/dfs/name"
+  when: inventory_hostname == groups['master'][0]
+
+- name: Create HDFS data directories on workers
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: "0755"
+  loop:
+    - "{{ hadoop_data }}/tmp"
+    - "{{ hadoop_data }}/dfs/data"
+  when: inventory_hostname in groups['workers']

@@ -1,0 +1,16 @@
+[Unit]
+Description=Hadoop ResourceManager
+After=network.target
+
+[Service]
+Type=simple
+User={{ hadoop_user }}
+Environment="JAVA_HOME={{ java_home }}"
+Environment="HADOOP_CONF_DIR={{ hadoop_dist }}/etc/hadoop"
+ExecStart={{ hadoop_dist }}/bin/yarn --daemon start resourcemanager
+ExecStop={{ hadoop_dist }}/bin/yarn --daemon stop resourcemanager
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

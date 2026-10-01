@@ -1,0 +1,22 @@
+---
+hadoop_version: "3.4.1"
+hadoop_download_url: "https://archive.apache.org/dist/hadoop/common/hadoop-{{ hadoop_version }}/hadoop-{{ hadoop_version }}.tar.gz"
+hadoop_home: "/opt/hadoop/hadoop-3.4.1"
+
+java_home: "/usr/lib/jvm/java-21-openjdk-amd64"
+java_version: 21
+
+hadoop_user: "hadoop"
+hadoop_group: "hadoop"
+
+# Память (в МБ)
+namenode_heap: 2048
+resourcemanager_heap: 2048
+datanode_heap: 1024
+nodemanager_heap: 1024
+yarn_max_allocation_mb: 4096
+
+# Директории
+hadoop_base: "/opt/hadoop"
+hadoop_dist: "{{ hadoop_base }}/hadoop-{{ hadoop_version }}"
+hadoop_data: "/var/lib/hadoop"

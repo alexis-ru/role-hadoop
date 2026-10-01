@@ -1,0 +1,83 @@
+---
+- name: Install systemd units
+  template:
+    src: "{{ item }}.service.j2"
+    dest: "/etc/systemd/system/{{ item }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - namenode
+    - datanode
+    - resourcemanager
+    - nodemanager
+    - historyserver
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Check if NameNode already formatted
+  stat:
+    path: "{{ hadoop_data }}/dfs/name/current/VERSION"
+  register: namenode_version_file
+  when: inventory_hostname == groups['master'][0]
+
+- name: Format NameNode (once)
+  shell: |
+    . /etc/profile
+    {{ hadoop_dist }}/bin/hdfs namenode -format -force
+  args:
+    executable: /bin/bash
+    chdir: "{{ hadoop_dist }}/bin"
+  environment:
+    JAVA_HOME: "{{ java_home }}"
+  when:
+    - inventory_hostname == groups['master'][0]
+    - not namenode_version_file.stat.exists
+  register: format_result
+  changed_when: "'Formatting' in format_result.stderr"
+
+- name: Start and enable NameNode
+  systemd:
+    name: namenode
+    state: started
+    enabled: yes
+  when: inventory_hostname == groups['master'][0]
+
+- name: Start and enable DataNode
+  systemd:
+    name: datanode
+    state: started
+    enabled: yes
+
+- name: Start and enable ResourceManager
+  systemd:
+    name: resourcemanager
+    state: started
+    enabled: yes
+  when: inventory_hostname == groups['master'][0]
+
+- name: Start and enable NodeManager
+  systemd:
+    name: nodemanager
+    state: started
+    enabled: yes
+
+- name: Start and enable HistoryServer
+  systemd:
+    name: historyserver
+    state: started
+    enabled: yes
+  when: inventory_hostname == groups['master'][0]
+
+- name: Wait for HDFS to be ready
+  command: "{{ hadoop_home }}/bin/hdfs dfsadmin -report"
+  environment:
+    JAVA_HOME: "{{ java_home }}"
+  register: hdfs_report
+  retries: 20
+  delay: 10
+  until: hdfs_report.rc == 0
+  changed_when: false
+  when: inventory_hostname == groups['master'][0]

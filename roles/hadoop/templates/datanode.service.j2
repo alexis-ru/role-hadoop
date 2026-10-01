@@ -1,0 +1,16 @@
+[Unit]
+Description=Hadoop DataNode
+After=network.target
+
+[Service]
+Type=simple
+User={{ hadoop_user }}
+Environment="JAVA_HOME={{ java_home }}"
+Environment="HADOOP_CONF_DIR={{ hadoop_dist }}/etc/hadoop"
+ExecStart={{ hadoop_dist }}/bin/hdfs --daemon start datanode
+ExecStop={{ hadoop_dist }}/bin/hdfs --daemon stop datanode
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

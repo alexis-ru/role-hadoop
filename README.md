@@ -1,2 +1,2 @@
 # role-hadoop
-Ansible Role from deploy HADOOP
+Роль Ansible для развертывания кластера Hadoop
