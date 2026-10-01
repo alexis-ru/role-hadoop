@@ -10,7 +10,10 @@
 
 '''
 jps
+
 ss -tlnp | grep 9000
+
 hdfs dfs -mkdir -p /user/hadoop
+
 hdfs dfs -ls /user
 '''
